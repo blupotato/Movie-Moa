@@ -1,9 +1,12 @@
 import os
+import sqlite3
+import uuid
 from datetime import date, timedelta
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
+import db
 
 load_dotenv()
 
@@ -15,7 +18,46 @@ TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie"
 TMDB_IMG = "https://image.tmdb.org/t/p/w342"
 
 app = Flask(__name__)
+db.init_db()
 poster_cache = {}
+
+
+def get_visitor_id():
+    visitor_id = request.headers.get("X-Visitor-Id", "")
+    try:
+        return str(uuid.UUID(visitor_id))
+    except (ValueError, AttributeError):
+        return None
+
+
+def read_review_payload():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None, "기록 데이터를 보내 주세요."
+    movie_cd = data.get("movieCd")
+    title = data.get("title")
+    review_text = data.get("review", "")
+    try:
+        rating = int(data.get("rating"))
+    except (TypeError, ValueError):
+        return None, "별점은 1점부터 5점까지 선택해 주세요."
+    if not isinstance(movie_cd, str) or not movie_cd or len(movie_cd) > 32:
+        return None, "영화 코드가 올바르지 않습니다."
+    if not isinstance(title, str) or not title.strip() or len(title) > 200:
+        return None, "영화 제목이 올바르지 않습니다."
+    if rating < 1 or rating > 5:
+        return None, "별점은 1점부터 5점까지 선택해 주세요."
+    if not isinstance(review_text, str) or len(review_text) > 180:
+        return None, "감상은 180자 이내로 입력해 주세요."
+    return {
+        "movieCd": movie_cd,
+        "title": title.strip(),
+        "poster": data.get("poster") if isinstance(data.get("poster"), str) else None,
+        "rating": rating,
+        "review": review_text.strip(),
+        "date": data.get("date") if isinstance(data.get("date"), str) else date.today().isoformat(),
+        "openDt": data.get("openDt") if isinstance(data.get("openDt"), str) else "",
+    }, None
 
 
 def find_poster(title, open_dt):
@@ -114,6 +156,46 @@ def movie_detail(movie_cd):
         "actors": [a.get("peopleNm", "") for a in info.get("actors", [])[:5]],
         **tmdb,
     })
+
+
+@app.route("/api/reviews", methods=["GET", "POST"])
+def reviews():
+    visitor_id = get_visitor_id()
+    if not visitor_id:
+        return jsonify({"error": "브라우저 식별 정보가 올바르지 않습니다."}), 400
+    if request.method == "GET":
+        return jsonify({"reviews": db.list_reviews(visitor_id)})
+
+    review, error = read_review_payload()
+    if error:
+        return jsonify({"error": error}), 400
+    try:
+        db.create_review(visitor_id, review)
+    except sqlite3.IntegrityError as exc:
+        if "UNIQUE constraint failed" in str(exc):
+            return jsonify({"error": "이미 기록한 영화입니다."}), 409
+        raise
+    return jsonify({"review": review}), 201
+
+
+@app.route("/api/reviews/<movie_cd>", methods=["PUT", "DELETE"])
+def review_item(movie_cd):
+    visitor_id = get_visitor_id()
+    if not visitor_id:
+        return jsonify({"error": "브라우저 식별 정보가 올바르지 않습니다."}), 400
+    if request.method == "DELETE":
+        if not db.delete_review(visitor_id, movie_cd):
+            return jsonify({"error": "기록을 찾을 수 없습니다."}), 404
+        return "", 204
+
+    review, error = read_review_payload()
+    if error:
+        return jsonify({"error": error}), 400
+    if review["movieCd"] != movie_cd:
+        return jsonify({"error": "영화 코드가 일치하지 않습니다."}), 400
+    if not db.update_review(visitor_id, movie_cd, review):
+        return jsonify({"error": "수정할 기록을 찾을 수 없습니다."}), 404
+    return jsonify({"review": review})
 
 
 if __name__ == "__main__":
