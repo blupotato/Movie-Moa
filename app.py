@@ -80,7 +80,7 @@ def find_poster(title, open_dt):
                 poster = TMDB_IMG + r["poster_path"]
                 break
     except requests.RequestException:
-        pass  # 포스터 실패는 전체 실패로 보지 않고 None으로 둔다
+        pass
 
     poster_cache[key] = poster
     return poster

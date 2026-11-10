@@ -14,26 +14,22 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#home" aria-label="무비모아 홈"><span class="brand-icon">M</span><span>movie<span class="brand-light">moa</span></span></a>
-    <nav class="tabs" aria-label="메인 메뉴"><button class="tab active" data-view="boxoffice">박스오피스</button><button class="tab" data-view="diary">내 영화 기록 <span id="diary-count" class="count">0</span></button></nav>
-    <div class="top-note"><span class="live-dot"></span> 오늘의 영화 탐험</div>
+    <nav class="tabs" aria-label="메인 메뉴"><button class="tab active" data-view="boxoffice">박스오피스</button><button class="tab" data-view="diary">내 영화 기록 <span id="diary-count" class="count" hidden>0</span></button></nav>
   </header>
   <main id="home">
-    <section class="hero">
-      <div class="hero-copy"><p class="eyebrow"><span class="sparkle">✦</span> YOUR PERSONAL MOVIE SPACE</p><h1>오늘은 어떤 영화가<br><span>마음에 남을까요?</span></h1><p class="hero-sub">지금 사랑받는 영화를 발견하고, 나만의 감상으로 간직해 보세요.</p>
-        <div class="hero-meta"><span class="hero-meta-icon">◉</span><span>영화진흥위원회 박스오피스</span><span class="meta-sep">·</span><span>매일 업데이트</span></div>
-      </div>
-      <div class="hero-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-disc"><span>▶</span></div><span class="art-star star-a">✳</span><span class="art-star star-b">✦</span><span class="art-star star-c">✧</span><div class="art-caption">YOUR NEXT<br>FAVORITE FILM</div></div>
+    <section class="hero" aria-label="무비모아">
+      <div class="hero-mark"><span class="hero-mark-icon">M</span><span>무비모아</span></div>
     </section>
     <section id="boxoffice-view" class="content-section">
-      <div class="section-heading"><div><p class="eyebrow">THE BIG SCREEN, IN YOUR POCKET</p><h2>오늘의 박스오피스 <span class="heading-spark">✦</span></h2><p class="section-sub">오늘 가장 많은 사랑을 받은 영화들을 만나보세요.</p></div><label class="date-control"><span>기준 날짜</span><input id="date-picker" type="date" aria-label="박스오피스 기준 날짜"></label></div>
+      <div class="section-heading"><div><h2>오늘의 박스오피스</h2></div><label class="date-control"><span>기준 날짜</span><input id="date-picker" type="date" aria-label="박스오피스 기준 날짜"></label></div>
       <div id="status" class="status" role="status"><span class="spinner"></span>영화 정보를 불러오는 중이에요</div>
       <div id="movie-grid" class="movie-grid"></div>
     </section>
     <section id="diary-view" class="content-section hidden">
-      <div class="section-heading"><div><p class="eyebrow">A LITTLE PIECE OF YOU</p><h2>나의 영화 기록 <span class="heading-spark">✦</span></h2><p class="section-sub">본 영화와 그날의 기분을 차곡차곡 모아보세요.</p></div></div>
+      <div class="section-heading"><div><h2>나의 영화 기록</h2></div></div>
       <div id="diary-stats" class="stats-grid"></div><div id="diary-list" class="diary-list"></div>
     </section>
-    <footer class="footer"><span class="footer-brand">movie<span>moa</span></span><span>영화 데이터 제공 <a href="https://www.kobis.or.kr/" target="_blank" rel="noreferrer">KOBIS</a> · 포스터 및 정보 제공 <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a></span><span>나만의 영화 취향을 기록해요 ✦</span></footer>
+    <footer class="footer"><span>영화 데이터 제공 <a href="https://www.kobis.or.kr/" target="_blank" rel="noreferrer">KOBIS</a> · 포스터 및 정보 제공 <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a></span></footer>
   </main>
   <dialog id="movie-dialog" class="movie-dialog"><button class="dialog-close" aria-label="닫기">×</button><div id="dialog-content"></div></dialog>
   <div id="toast" class="toast" role="status"></div>

@@ -62,7 +62,11 @@ async function initDiary() {
   }
   updateDiaryCount();
 }
-function updateDiaryCount() { $('#diary-count').textContent = diaryRecords.length; }
+function updateDiaryCount() {
+  const count = $('#diary-count');
+  count.textContent = diaryRecords.length;
+  count.hidden = diaryRecords.length === 0;
+}
 function showStatus(message, loading = false) {
   statusBox.classList.add('visible');
   statusBox.innerHTML = `${loading ? '<span class="spinner"></span>' : ''}${message}`;
@@ -137,7 +141,7 @@ function safeText(value, fallback = '정보 없음') { return value || fallback;
 async function openMovie(movie) {
   selectedRating = 0;
   const existing = diaryRecords.find((item) => item.movie_cd === movie.movieCd);
-  $('#dialog-content').innerHTML = `<div class="dialog-layout"><div id="detail-poster"></div><div class="dialog-copy"><p class="eyebrow">MOVIE DETAIL · #${movie.rank}</p><h3>${escapeHtml(movie.title)}</h3><div id="detail-original" class="dialog-original">영화 정보를 불러오는 중이에요</div><div class="dialog-facts"><span class="pill">개봉 ${movie.openDt || '정보 없음'}</span><span class="pill">누적 ${formatCompact(movie.audiAcc)}명</span></div><p id="detail-overview" class="overview">상세 정보를 불러오는 중이에요.</p><div id="detail-credits" class="credits"></div><form id="record-form" class="record-form"><label>나의 별점</label><div class="stars" role="radiogroup" aria-label="별점">${[1,2,3,4,5].map((n) => `<button type="button" class="star-button ${existing?.rating >= n ? 'selected' : ''}" data-rating="${n}" aria-label="${n}점">★</button>`).join('')}</div><label for="review-input">한 줄 감상</label><textarea id="review-input" class="review-input" maxlength="180" placeholder="이 영화, 어땠나요?">${escapeHtml(existing?.review || '')}</textarea><button class="save-button" type="submit">${existing ? '기록 수정하기' : '내 영화로 기록하기'}</button></form></div></div>`;
+  $('#dialog-content').innerHTML = `<div class="dialog-layout"><div id="detail-poster"></div><div class="dialog-copy"><h3>${escapeHtml(movie.title)}</h3><div class="dialog-facts"><span class="pill">개봉 ${movie.openDt || '정보 없음'}</span><span class="pill">누적 ${formatCompact(movie.audiAcc)}명</span></div><p id="detail-overview" class="overview">상세 정보를 불러오는 중이에요.</p><div id="detail-credits" class="credits"></div><form id="record-form" class="record-form"><label>나의 별점</label><div class="stars" role="radiogroup" aria-label="별점">${[1,2,3,4,5].map((n) => `<button type="button" class="star-button ${existing?.rating >= n ? 'selected' : ''}" data-rating="${n}" aria-label="${n}점">★</button>`).join('')}</div><label for="review-input">한 줄 감상</label><textarea id="review-input" class="review-input" maxlength="180" placeholder="이 영화, 어땠나요?">${escapeHtml(existing?.review || '')}</textarea><button class="save-button" type="submit">${existing ? '기록 수정하기' : '내 영화로 기록하기'}</button></form></div></div>`;
   $('#detail-poster').append(posterElement(movie.poster, movie.title, 'dialog-poster'));
   dialog.showModal();
   const ratingButtons = [...dialog.querySelectorAll('.star-button')];
@@ -168,7 +172,6 @@ async function openMovie(movie) {
     const detail = await response.json();
     if (!response.ok) throw new Error(detail.error || '상세 정보를 불러오지 못했어요.');
     if (!dialog.open || !$('#detail-overview')) return;
-    $('#detail-original').textContent = detail.titleEn || '';
     const overview = $('#detail-overview');
     overview.textContent = detail.overview || '등록된 줄거리 정보가 없어요.';
     const credits = $('#detail-credits');
@@ -197,9 +200,7 @@ async function renderDiary() {
   const records = diaryRecords;
   const ratings = records.map((record) => Number(record.rating) || 0);
   const average = records.length ? (ratings.reduce((a, b) => a + b, 0) / records.length).toFixed(1) : '—';
-  const currentMonth = localDateInput().slice(0, 7);
-  const monthCount = records.filter((record) => record.watched_on?.startsWith(currentMonth)).length;
-  $('#diary-stats').innerHTML = `<div class="stat-card"><div class="stat-label">기록한 영화</div><div class="stat-value">${records.length}<small> 편</small></div></div><div class="stat-card"><div class="stat-label">나의 평균 별점</div><div class="stat-value">${average}<small> / 5</small></div></div><div class="stat-card"><div class="stat-label">이번 달 관람</div><div class="stat-value">${monthCount}<small> 편</small></div></div><div class="chart-card"><div class="chart-title">월별 영화 기록 <span class="section-sub">최근 6개월</span></div><canvas class="chart" id="monthly-chart" aria-label="최근 6개월 월별 영화 기록 그래프"></canvas></div>`;
+  $('#diary-stats').innerHTML = `<div class="stat-card"><div class="stat-label">기록한 영화</div><div class="stat-value">${records.length}<small> 편</small></div></div><div class="stat-card"><div class="stat-label">나의 평균 별점</div><div class="stat-value">${average}<small> / 5</small></div></div><div class="chart-card"><div class="chart-title">월별 영화 기록</div><canvas class="chart" id="monthly-chart" aria-label="최근 6개월 월별 영화 기록 그래프"></canvas></div>`;
   drawChart(records);
   const list = $('#diary-list'); list.replaceChildren();
   if (!records.length) {
